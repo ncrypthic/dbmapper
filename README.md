@@ -1,36 +1,46 @@
 sqlmapper
 =========
 
-sqlmapper provides DSL for mapping columns into field/variable programmatically.
-With controlled mapping, adding new columns into existing table in database
-will not break existing code as long as existing column is not modified.
+`sqlmapper` provides DSL for mapping columns from database into field/variable programmatically.
+`sqlmapper` was inspired by Scala's [Anorm](https://www.playframework.com/documentation/latest/ScalaAnorm)
+package. With mapping done on a per-column basis, adding new columns into existing table will not break
+existing code as long as it is not modified.
 
 Usage
 -----
 
 1. Import the package
 
-`import "github.com/ncrypthic/sqlmapper"
+`import "github.com/ncrypthic/sqlmapper/dialects/cassandra"
+
+or
+
+`import "github.com/ncrypthic/sqlmapper/dialects/mysql"`
 
 2. Prepare result variables `result := make([]SomeStruct, 0)`
 
 3. Create `RowMapper` interface instance, and use `MappedColumns.Then` to
    collect the result
    ```go
-           row := SomeStruct{}
-           sqlmapper.Columns(
-                   sqlmapper.Column("column_name").As(&row.SomeField),
-           ).Then(func() error {
-                   // collect the result
-                   result = append(result, row)
-                   return nil
-           })
+           // Prepare row to hold scan result
+           func rowMapper() sqlmapper.RowMapper {
+                   return func() *sqlmapper.MappedColumns {
+                           row := SomeStruct{}
+                           sqlmapper.Columns(
+                                   sqlmapper.Column("column_name").As(&row.SomeField),
+                           ).Then(func() error {
+                                   // append row to a result slice
+                                   // result = append(result, row)
+                                   return nil
+                           })
+                   }
+           }
    ```
 
-4. Pass `sql.Query` return value into `sqlmapper.Parse` method then
+4. Pass `sql.Query` / `*gocql.Query` return value into `<dialect_package>.Parse` method then
    pass Row mapper to map the result
    ```
-   sqlmapper.Parse(sql.Query("SELECT * FROM some_table")).Map(rowMapperInstance)
+   mysql.Parse(sql.Query("SELECT * FROM some_table")).Map(rowMapper)
    ```
 
 Complete Example
@@ -41,6 +51,7 @@ Complete Example
 import (
     "database/sql"
     "github.com/ncrypthic/sqlmapper"
+    "github.com/ncrypthic/sqlmapper/dialect/mysql"
 )
 
 type Dummy struct {
@@ -54,7 +65,7 @@ type Dummy struct {
 result := make([]Dummy, 0)
 
 // Single row mapper for table 'dummy'. This way it can be reused anywhere
-dummySqlMapper := func(result *[]Dummy) MappedColumns {
+dummySqlMapper := func(result *[]Dummy) *sqlmapper.MappedColumns {
         row := Dummy{}
         return sqlmapper.Columns(
                 sqlmapper.Column("id").As(&row.ID),
@@ -68,16 +79,12 @@ dummySqlMapper := func(result *[]Dummy) MappedColumns {
 }
 
 // Multiple rows mapper for table 'dummy'
-dummyRowsMapper = func(result *[]Dummy) RowMapper {
-        return func() MappedColumns {
+dummyRowsMapper = func(result *[]Dummy) sqlmapper.RowMapper {
+        return func() *sqlmapper.MappedColumns {
                 return dummySqlMapper(result)
         }
 }
 
-sqlmapper.Parse(db.Query("SELECT id, name, active, opt_field FROM example")).Map(func() MappedColumns {
-        return dummySqlMapper(row)
-})
-// OR
 sqlmapper.Parse(db.Query("SELECT id, name, active, opt_field FROM example")).Map(dummyRowsMapper(result))
 
 for _, r := range result {
