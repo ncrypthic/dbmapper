@@ -11,30 +11,30 @@ Usage
 
 1. Import the package
 
-`import "github.com/ncrypthic/sqlmapper/dialects/cassandra"
+   `import "github.com/ncrypthic/sqlmapper/dialects/cassandra"`
 
-or
+   or
 
-`import "github.com/ncrypthic/sqlmapper/dialects/mysql"`
+   `import "github.com/ncrypthic/sqlmapper/dialects/mysql"`
 
 2. Prepare result variables `result := make([]SomeStruct, 0)`
 
 3. Create `RowMapper` interface instance, and use `MappedColumns.Then` to
    collect the result
    ```go
-           // Prepare row to hold scan result
-           func rowMapper() sqlmapper.RowMapper {
-                   return func() *sqlmapper.MappedColumns {
-                           row := SomeStruct{}
-                           sqlmapper.Columns(
-                                   sqlmapper.Column("column_name").As(&row.SomeField),
-                           ).Then(func() error {
-                                   // append row to a result slice
-                                   // result = append(result, row)
-                                   return nil
-                           })
-                   }
+   // Prepare row to hold scan result
+   func rowMapper() sqlmapper.RowMapper {
+           return func() *sqlmapper.MappedColumns {
+                   row := SomeStruct{}
+                   sqlmapper.Columns(
+                           sqlmapper.Column("column_name").As(&row.SomeField),
+                   ).Then(func() error {
+                           // append row to a result slice
+                           // result = append(result, row)
+                           return nil
+                   })
            }
+   }
    ```
 
 4. Pass `sql.Query` / `*gocql.Query` return value into `<dialect_package>.Parse` method then
