@@ -40,7 +40,13 @@ Usage
 4. Pass `sql.Query` / `*gocql.Query` return value into `<dialect_package>.Parse` method then
    pass Row mapper to map the result
    ```
-   mysql.Parse(sql.Query("SELECT * FROM some_table")).Map(rowMapper)
+   mysql.Parse(sql.Query("SELECT col_1, col_2 FROM some_table")).Map(rowMapper)
+   ```
+
+   Or for cassandra
+
+   ```
+   cassandra.Parse(gocql.Query("SELECT col_1, col_2 FROM some_table")).Map(rowMapper)
    ```
 
 MySQL Example
