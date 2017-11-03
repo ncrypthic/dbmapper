@@ -43,7 +43,7 @@ Usage
    mysql.Parse(sql.Query("SELECT * FROM some_table")).Map(rowMapper)
    ```
 
-Complete Example
+MySQL Example
 ----------------
 
 ```go
@@ -61,34 +61,36 @@ type Dummy struct {
     OptField sql.NullString
 }
 
-// db := sql.Open()
-result := make([]Dummy, 0)
+func main() {
+        // db := sql.Open()
+        result := make([]Dummy, 0)
 
-// Single row mapper for table 'dummy'. This way it can be reused anywhere
-dummySqlMapper := func(result *[]Dummy) *sqlmapper.MappedColumns {
-        row := Dummy{}
-        return sqlmapper.Columns(
-                sqlmapper.Column("id").As(&row.ID),
-                sqlmapper.Column("id").As(&row.Name),
-                sqlmapper.Column("id").As(&row.Active),
-                sqlmapper.Column("id").As(&row.OptField),
-        ).Then(func() error {
-                *result = append(*result, row)
-                return nil
-        })
-}
-
-// Multiple rows mapper for table 'dummy'
-dummyRowsMapper = func(result *[]Dummy) sqlmapper.RowMapper {
-        return func() *sqlmapper.MappedColumns {
-                return dummySqlMapper(result)
+        // Single row mapper for table 'dummy'. This way it can be reused anywhere
+        dummySqlMapper := func(result *[]Dummy) *sqlmapper.MappedColumns {
+                row := Dummy{}
+                return sqlmapper.Columns(
+                        sqlmapper.Column("id").As(&row.ID),
+                        sqlmapper.Column("id").As(&row.Name),
+                        sqlmapper.Column("id").As(&row.Active),
+                        sqlmapper.Column("id").As(&row.OptField),
+                ).Then(func() error {
+                        *result = append(*result, row)
+                        return nil
+                })
         }
-}
 
-sqlmapper.Parse(db.Query("SELECT id, name, active, opt_field FROM example")).Map(dummyRowsMapper(result))
+        // Multiple rows mapper for table 'dummy'
+        dummyRowsMapper = func(result *[]Dummy) sqlmapper.RowMapper {
+                return func() *sqlmapper.MappedColumns {
+                        return dummySqlMapper(result)
+                }
+        }
 
-for _, r := range result {
-    // Do something with the result
+        sqlmapper.Parse(db.Query("SELECT id, name, active, opt_field FROM example")).Map(dummyRowsMapper(result))
+
+        for _, r := range result {
+            // Do something with the result
+        }
 }
 ```
 
