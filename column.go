@@ -1,4 +1,4 @@
-package dbmapper
+package sqlmapper
 
 import (
 	"fmt"
@@ -52,28 +52,28 @@ func Column(name string) ColumnMap {
 }
 
 // Columns helper method to create slice of ColumnMap
-func Columns(columns ...ColumnMap) MappedColumns {
-	return MappedColumns{columns, func() error { return nil }}
+func Columns(columns ...ColumnMap) *MappedColumns {
+	return &MappedColumns{columns, func() error { return nil }}
 }
 
 // ColumnMapper provides allowing post mapping callback to process
 // scan result
 type ColumnMapper interface {
-	Then(func()) MappedColumns
+	Then(func()) *MappedColumns
 }
 
 // MappedColumns is a collections of ColumnMap
 type MappedColumns struct {
-	columns []ColumnMap
+	Columns []ColumnMap
 	cb      func() error
 }
 
 // Then allows callback to proses result after row scan
-func (mapped MappedColumns) Then(cb func() error) MappedColumns {
+func (mapped *MappedColumns) Then(cb func() error) *MappedColumns {
 	mapped.cb = cb
 	return mapped
 }
 
-func (mapped MappedColumns) done() error {
+func (mapped *MappedColumns) Done() error {
 	return mapped.cb()
 }
