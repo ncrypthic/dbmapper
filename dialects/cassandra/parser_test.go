@@ -12,18 +12,17 @@ func mockRow(id uint, name string, active bool, opt_field *string) []interface{}
 	return []interface{}{id, name, active, opt_field}
 }
 
-type mockQuery struct {
+var pos int = 0
+
+type mockCqlIter struct {
+	base *gocql.Iter
 }
 
-func (i *mockQuery) Iter() CqlIterator {
-	return &mockMapScaner{}
+func resetIter() {
+	pos = 0
 }
 
-type mockMapScaner struct {
-	pos int
-}
-
-func (i *mockMapScaner) Columns() []gocql.ColumnInfo {
+func (i *mockCqlIter) Columns() []gocql.ColumnInfo {
 	return []gocql.ColumnInfo{
 		gocql.ColumnInfo{Name: "id"},
 		gocql.ColumnInfo{Name: "name"},
@@ -32,7 +31,7 @@ func (i *mockMapScaner) Columns() []gocql.ColumnInfo {
 	}
 }
 
-func (i *mockMapScaner) Scan(result ...interface{}) bool {
+func (i *mockCqlIter) Scan(result ...interface{}) bool {
 	alice := "alice"
 	pAlice := &alice
 	bob := "bob"
@@ -43,18 +42,18 @@ func (i *mockMapScaner) Scan(result ...interface{}) bool {
 		mockRow(2, bob, false, pBob),
 		mockRow(2, charlie, false, nil),
 	}
-	if i.pos >= len(rows) {
+	if pos >= len(rows) {
 		return false
 	} else {
-		for j, v := range rows[i.pos] {
+		for j, v := range rows[pos] {
 			i.assignVal(result[j], v)
 		}
-		i.pos++
+		pos++
 		return true
 	}
 }
 
-func (i *mockMapScaner) assignVal(dest interface{}, source interface{}) {
+func (i *mockCqlIter) assignVal(dest interface{}, source interface{}) {
 	switch d := dest.(type) {
 	case **string:
 		switch s := source.(type) {
@@ -77,6 +76,12 @@ func (i *mockMapScaner) assignVal(dest interface{}, source interface{}) {
 			*d = s
 		}
 	}
+}
+
+type mockCqlQuery struct{}
+
+func (i *mockCqlQuery) Iter() CqlIterator {
+	return &mockCqlIter{nil}
 }
 
 type ParseErr error
@@ -108,10 +113,11 @@ func usersSqlMapper(result *[]User) RowMapper {
 }
 
 func Query(query string) CqlQuery {
-	return &mockQuery{}
+	return &mockCqlQuery{}
 }
 
 func TestRowParser(t *testing.T) {
+	defer resetIter()
 	query := "SELECT id, name, active, opt_string FROM users"
 	users := make([]User, 0)
 	err := Parse(Query(query)).Map(func() *MappedColumns {
@@ -128,6 +134,7 @@ func TestRowParser(t *testing.T) {
 }
 
 func TestRowsParser(t *testing.T) {
+	defer resetIter()
 	query := "SELECT id, name, active, opt_string FROM users"
 	users := make([]User, 0)
 	err := Parse(Query(query)).Map(usersSqlMapper(&users))

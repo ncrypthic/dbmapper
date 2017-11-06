@@ -7,15 +7,8 @@ import (
 	. "github.com/ncrypthic/sqlmapper"
 )
 
-// Place holder for unmapped column
-type dummy struct{}
-
-func (d *dummy) Scan(_ interface{}) error {
-	return nil
-}
-
 type mapper struct {
-	query CqlQuery
+	query interface{}
 }
 
 func (m *mapper) targets(mapTarget map[string]*interface{}, names []string) []interface{} {
@@ -24,7 +17,7 @@ func (m *mapper) targets(mapTarget map[string]*interface{}, names []string) []in
 		if target, ok := mapTarget[name]; ok {
 			result[i] = *target
 		} else {
-			result[i] = new(dummy)
+			result[i] = nil
 		}
 	}
 	return result
@@ -36,13 +29,19 @@ func (m *mapper) Map(rowMapper RowMapper) (mapErr error) {
 		return NoResultErr(errors.New("Query is not valid"))
 	}
 	var dbColumns []string
-	rs := m.query.Iter()
+	var rs CqlIterator
+	switch t := m.query.(type) {
+	case CqlQuery:
+		rs = t.Iter()
+	case GocqlQuery:
+		rs = t.Iter()
+	default:
+		return fmt.Errorf("Failed to iterate query result")
+	}
 	for {
-		if dbColumns == nil {
-			dbColumns = make([]string, 0)
-			for _, cqlColumn := range rs.Columns() {
-				dbColumns = append(dbColumns, cqlColumn.Name)
-			}
+		dbColumns = make([]string, 0)
+		for _, cqlColumn := range rs.Columns() {
+			dbColumns = append(dbColumns, cqlColumn.Name)
 		}
 		targets := rowMap.Columns
 		targetMap := make(map[string]*interface{})
