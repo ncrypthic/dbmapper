@@ -1,4 +1,4 @@
-package sqlmapper
+package dbmapper
 
 import (
 	"fmt"
