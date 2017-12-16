@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	. "github.com/ncrypthic/sqlmapper"
+	. "github.com/ncrypthic/dbmapper"
 )
 
 // Place holder for unmapped column

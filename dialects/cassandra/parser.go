@@ -2,7 +2,7 @@ package cassandra
 
 import (
 	"github.com/gocql/gocql"
-	. "github.com/ncrypthic/sqlmapper"
+	. "github.com/ncrypthic/dbmapper"
 )
 
 type CqlIterator interface {

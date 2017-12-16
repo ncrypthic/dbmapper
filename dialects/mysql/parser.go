@@ -3,7 +3,7 @@ package mysql
 import (
 	"database/sql"
 
-	. "github.com/ncrypthic/sqlmapper"
+	. "github.com/ncrypthic/dbmapper"
 )
 
 // ResultMapper is database result set mapper

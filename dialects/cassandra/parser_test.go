@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/gocql/gocql"
-	. "github.com/ncrypthic/sqlmapper"
+	. "github.com/ncrypthic/dbmapper"
 )
 
 func mockRow(id uint, name string, active bool, opt_field *string) []interface{} {

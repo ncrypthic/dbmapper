@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	sqlMock "github.com/DATA-DOG/go-sqlmock"
-	. "github.com/ncrypthic/sqlmapper"
+	. "github.com/ncrypthic/dbmapper"
 )
 
 type ParseErr error

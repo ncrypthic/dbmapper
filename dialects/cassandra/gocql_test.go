@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/gocql/gocql"
-	. "github.com/ncrypthic/sqlmapper"
+	. "github.com/ncrypthic/dbmapper"
 )
 
 type CqlUser struct {

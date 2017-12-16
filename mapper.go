@@ -1,4 +1,4 @@
-package sqlmapper
+package dbmapper
 
 // NoResultErr no result from query
 type NoResultErr error
