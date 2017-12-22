@@ -26,7 +26,15 @@ Query Usage
    ```go
    queryString := "SELECT col_a, col_b FROM a_table WHERE col_a = :a_parameter)
    query := dbmapper.Prepare(queryString).With(
-           Parameter{"a_parameter", "some_value"},
+           mysql.Param("a_parameter", "some_value"),
+   )
+   resultSet, err := driver.Query(query.SQL(), query.Params()...)
+   ```
+   or
+   ```go
+   queryString := "SELECT col_a, col_b FROM a_table WHERE col_a = :a_parameter)
+   query := dbmapper.Prepare(queryString).With(
+           cassandra.Param("a_parameter", "some_value"),
    )
    resultSet, err := driver.Query(query.SQL(), query.Params()...)
    ```
