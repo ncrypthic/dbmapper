@@ -12,9 +12,9 @@ Query Usage
 
 2. Import database dialect. Currently only `mysql` and `cassandra` are supported
    ```go
-   // import "github.com/ncrypthic/dbmapper/dialect/cassandra"
+   // import "github.com/ncrypthic/dbmapper/dialects/cassandra"
    // or
-   import "github.com/ncrypthic/dbmapper/dialect/mysql"
+   import "github.com/ncrypthic/dbmapper/dialects/mysql"
    ```
 
 3. Create database query with named parameter
@@ -48,11 +48,11 @@ Result Mapping Usage
 
 2. Import database dialect. Currently only `mysql` and `cassandra` are supported
    ```go
-   import "github.com/ncrypthic/dbmapper/dialect/cassandra"
+   import "github.com/ncrypthic/dbmapper/dialects/cassandra"
    ```
    or
    ```go
-   import "github.com/ncrypthic/dbmapper/dialect/mysql"
+   import "github.com/ncrypthic/dbmapper/dialects/mysql"
    ```
 
 2. Prepare variables to hold the mapped row results `result := make([]SomeStruct, 0)`
@@ -97,7 +97,7 @@ Example
 import (
     "database/sql"
     "github.com/ncrypthic/dbmapper"
-    "github.com/ncrypthic/dbmapper/dialect/mysql"
+    "github.com/ncrypthic/dbmapper/dialects/mysql"
 )
 
 type User struct {
