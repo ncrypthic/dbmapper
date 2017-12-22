@@ -1,6 +1,7 @@
 package dbmapper
 
 import (
+	"log"
 	"regexp"
 )
 
@@ -20,10 +21,9 @@ type ResultSet interface {
 // returns slice of ColumnMap for columns scan
 type RowMapper func() *MappedColumns
 
-// Parameter is query parameter key value pair
-type Parameter struct {
-	Name  string
-	Value interface{}
+type Parameter interface {
+	Name() string
+	Value() (interface{}, error)
 }
 
 type QueryMapper interface {
@@ -31,6 +31,7 @@ type QueryMapper interface {
 	Params() []interface{}
 	SQL() string
 	ParamNames() []string
+	Error() error
 }
 
 // ResultMapper is database result set mapper
@@ -43,10 +44,19 @@ type query struct {
 	sql        string
 	params     map[string]interface{}
 	paramNames []string
+	err        error
+}
+
+func (q *query) Error() error {
+	return q.err
 }
 
 func (q *query) Params() []interface{} {
 	args := make([]interface{}, 0)
+	if q.err != nil {
+		log.Printf("Failed to get query string, %v", q.err)
+		return args
+	}
 	for _, name := range q.paramNames {
 		if val, ok := q.params[name]; ok {
 			args = append(args, val)
@@ -56,10 +66,18 @@ func (q *query) Params() []interface{} {
 }
 
 func (q *query) SQL() string {
+	if q.err != nil {
+		log.Printf("Failed to get query string, %v", q.err)
+		return ""
+	}
 	return q.sql
 }
 
 func (q *query) ParamNames() []string {
+	if q.err != nil {
+		log.Printf("Failed to get query string, %v", q.err)
+		return make([]string, 0)
+	}
 	return q.paramNames
 }
 
@@ -70,7 +88,12 @@ func (q *query) With(parameters ...Parameter) QueryMapper {
 		q.params = make(map[string]interface{})
 	}
 	for _, p := range parameters {
-		q.params[":"+p.Name] = p.Value
+		val, err := p.Value()
+		if err != nil {
+			q.err = err
+			return q
+		}
+		q.params[":"+p.Name()] = val
 	}
 	return q
 }

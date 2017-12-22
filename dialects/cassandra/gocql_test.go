@@ -60,7 +60,7 @@ func TestCql(t *testing.T) {
 
 func TestCqlQueryMapper(t *testing.T) {
 	query := Prepare("SELECT id, first_name FROM users_by_last_name WHERE last_name = :last_name").With(
-		Parameter{"last_name", "afriyadi"},
+		Param("last_name", "afriyadi"),
 	)
 	expectedParams := []interface{}{"afriyadi"}
 	expectedParamNames := []string{":id", "last_name"}
