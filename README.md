@@ -28,6 +28,9 @@ Query Usage
    query := dbmapper.Prepare(queryString).With(
            mysql.Param("a_parameter", "some_value"),
    )
+   if query.Error() != nil {
+           // handle parameter error
+   }
    resultSet, err := driver.Query(query.SQL(), query.Params()...)
    ```
    or
@@ -36,6 +39,9 @@ Query Usage
    query := dbmapper.Prepare(queryString).With(
            cassandra.Param("a_parameter", "some_value"),
    )
+   if query.Error() != nil {
+           // handle parameter error
+   }
    resultSet, err := driver.Query(query.SQL(), query.Params()...)
    ```
 
@@ -134,11 +140,14 @@ func main() {
         users := make([]User, 0)
 
         query := dbmapper.Prepare("SELECT id, name, active, phone_number FROM user")
+        if query.Error() != nil {
+                // handle parameter error
+        }
 
         dbmapper.Parse(db.Query(query.SQL(), query.Params()...)).Map(usersMapper(result))
 
         for _, r := range result {
-            // Do something with the result
+                // Do something with the result
         }
 }
 ```
