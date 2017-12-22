@@ -84,3 +84,20 @@ func TestRowsParser(t *testing.T) {
 		}
 	}
 }
+
+func TestQueryMapper(t *testing.T) {
+	namedSql := "insert into test values (:id, :name)"
+	q := Prepare(namedSql).With(
+		Parameter{"id", "123"},
+		Parameter{"name", 1},
+		Parameter{"phone", "0827126"},
+	)
+	expectedParams := []interface{}{"123", 1}
+	expectedParamNames := []string{":id", ":name"}
+	if len(q.ParamNames()) != 2 {
+		t.Errorf("Fail: expect %v parameters, got %v instead", expectedParamNames, q.ParamNames())
+	}
+	if len(q.Params()) != 2 {
+		t.Errorf("Fail: expect %v parameters, got %v instead", expectedParams, q.Params())
+	}
+}

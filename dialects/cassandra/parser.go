@@ -18,11 +18,6 @@ type GocqlQuery interface {
 	Iter() *gocql.Iter
 }
 
-// ResultMapper is database result set mapper
-type ResultMapper interface {
-	Map(RowMapper) error
-}
-
 // Parse is default implementation of Parser interface
 func Parse(query interface{}) ResultMapper {
 	return &mapper{query}

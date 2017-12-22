@@ -74,6 +74,7 @@ func (mapped *MappedColumns) Then(cb func() error) *MappedColumns {
 	return mapped
 }
 
+// Done will execute callback
 func (mapped *MappedColumns) Done() error {
 	return mapped.cb()
 }
