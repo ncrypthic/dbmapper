@@ -8,6 +8,7 @@ import (
 type CqlIterator interface {
 	Columns() []gocql.ColumnInfo
 	Scan(...interface{}) bool
+	Close() error
 }
 
 type CqlQuery interface {

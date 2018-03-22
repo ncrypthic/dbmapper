@@ -60,5 +60,5 @@ func (m *mapper) Map(rowMapper RowMapper) (mapErr error) {
 			return mapErr
 		}
 	}
-	return
+	return rs.Close()
 }

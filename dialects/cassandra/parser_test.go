@@ -53,6 +53,10 @@ func (i *mockCqlIter) Scan(result ...interface{}) bool {
 	}
 }
 
+func (i *mockCqlIter) Close() error {
+	return nil
+}
+
 func (i *mockCqlIter) assignVal(dest interface{}, source interface{}) {
 	switch d := dest.(type) {
 	case **string:
