@@ -3,6 +3,7 @@ package dbmapper
 import (
 	"log"
 	"regexp"
+	"strings"
 )
 
 // NoResultErr no result from query
@@ -23,7 +24,7 @@ type RowMapper func() *MappedColumns
 
 type Parameter interface {
 	Name() string
-	Value() (interface{}, error)
+	Value() ([]interface{}, error)
 }
 
 type QueryMapper interface {
@@ -52,17 +53,15 @@ func (q *query) Error() error {
 }
 
 func (q *query) Params() []interface{} {
-	args := make([]interface{}, 0)
+	params := make([]interface{}, 0)
 	if q.err != nil {
 		log.Printf("Failed to get query string, %v", q.err)
-		return args
+		return params
 	}
-	for _, name := range q.paramNames {
-		if val, ok := q.params[name]; ok {
-			args = append(args, val)
-		}
+	for _, val := range q.params {
+		params = append(params, val)
 	}
-	return args
+	return params
 }
 
 func (q *query) SQL() string {
@@ -82,18 +81,32 @@ func (q *query) ParamNames() []string {
 }
 
 func (q *query) With(parameters ...Parameter) QueryMapper {
-	pattern := regexp.MustCompile(":([a-z0-9-_]+)")
-	q.sql = pattern.ReplaceAllString(q.sql, "?")
+	q.sql = q.namedSql
 	if q.params == nil {
 		q.params = make(map[string]interface{})
 	}
 	for _, p := range parameters {
+		paramName := ":" + p.Name()
+		if strings.Index(q.namedSql, paramName) == -1 {
+			continue
+		}
+		q.paramNames = append(q.paramNames, paramName)
 		val, err := p.Value()
 		if err != nil {
 			q.err = err
 			return q
 		}
-		q.params[":"+p.Name()] = val
+		if len(val) > 1 {
+			sliceElmts := []string{}
+			for idx, elmt := range val {
+				q.params[paramName+"_"+string(idx)] = elmt
+				sliceElmts = append(sliceElmts, "?")
+			}
+			q.sql = strings.Replace(q.sql, paramName, strings.Join(sliceElmts, ", "), 1)
+		} else if len(val) == 1 {
+			q.params[paramName] = val
+			q.sql = strings.Replace(q.sql, paramName, "?", 1)
+		}
 	}
 	return q
 }
@@ -101,7 +114,23 @@ func (q *query) With(parameters ...Parameter) QueryMapper {
 // Prepare
 func Prepare(namedSql string) QueryMapper {
 	pattern := regexp.MustCompile(":([a-z0-9-_]+)")
-	paramNames := pattern.FindAllString(namedSql, -1)
 	sql := pattern.ReplaceAllString(namedSql, "?")
-	return &query{namedSql: namedSql, sql: sql, paramNames: paramNames}
+	return &query{namedSql: namedSql, sql: sql, paramNames: make([]string, 0)}
+}
+
+type parameter struct {
+	name  string
+	value []interface{}
+}
+
+func (p *parameter) Name() string {
+	return p.name
+}
+
+func (p *parameter) Value() ([]interface{}, error) {
+	return p.value, nil
+}
+
+func Param(name string, val ...interface{}) Parameter {
+	return &parameter{name, val}
 }
