@@ -86,7 +86,7 @@ func TestRowsParser(t *testing.T) {
 }
 
 func TestQueryMapper(t *testing.T) {
-	namedSql := "insert into test values (:id, :name)"
+	namedSql := "insert into test(id, name, created) values (:id, :name, NOW())"
 	q := Prepare(namedSql).With(
 		Param("id", "123"),
 		Param("name", 1),
@@ -94,10 +94,32 @@ func TestQueryMapper(t *testing.T) {
 	)
 	expectedParams := []interface{}{"123", 1}
 	expectedParamNames := []string{":id", ":name"}
+	expectedSql := "insert into test(id, name, created) values (?, ?, NOW())"
 	if len(q.ParamNames()) != 2 {
 		t.Errorf("Fail: expect %v parameters, got %v instead", expectedParamNames, q.ParamNames())
 	}
 	if len(q.Params()) != 2 {
 		t.Errorf("Fail: expect %v parameters, got %v instead", expectedParams, q.Params())
+	}
+	if q.SQL() != expectedSql {
+		t.Errorf("Fail: expect [ %v ] sql string, got [ %v ] instead", expectedSql, q.SQL())
+	}
+	ids := []interface{}{"1", "2"}
+	selectSql := "select id, name, phone from test where id IN (:ids) and name like :keyword"
+	q = Prepare(selectSql).With(
+		Param("ids", ids...),
+		Param("keyword", "%abc%"),
+	)
+	expectedParams = []interface{}{"1", "2", "%abc%"}
+	expectedParamNames = []string{":ids", ":keyword"}
+	expectedSql = "select id, name, phone from test where id IN (?, ?) and name like ?"
+	if len(q.ParamNames()) != 2 {
+		t.Errorf("Fail: expect %v parameters, got %v instead", expectedParamNames, q.ParamNames())
+	}
+	if len(q.Params()) != 3 {
+		t.Errorf("Fail: expect %v parameters, got %v instead", expectedParams, q.Params())
+	}
+	if q.SQL() != expectedSql {
+		t.Errorf("Fail: expect [ %v ] sql string, got [ %v ] instead", expectedSql, q.SQL())
 	}
 }
