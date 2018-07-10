@@ -1,6 +1,7 @@
 package dbmapper
 
 import (
+	"errors"
 	"log"
 	"regexp"
 	"strings"
@@ -107,8 +108,8 @@ func (q *query) With(parameters ...Parameter) QueryMapper {
 			q.params[paramName] = val[0]
 			q.sql = strings.Replace(q.sql, paramName, "?", 1)
 		} else {
-			q.err = fmt.Errorf("Missing paramters")
-			return
+			q.err = errors.New("Missing paramters")
+			return q
 		}
 	}
 	return q
