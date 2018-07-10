@@ -104,8 +104,11 @@ func (q *query) With(parameters ...Parameter) QueryMapper {
 			}
 			q.sql = strings.Replace(q.sql, paramName, strings.Join(sliceElmts, ", "), 1)
 		} else if len(val) == 1 {
-			q.params[paramName] = val
+			q.params[paramName] = val[0]
 			q.sql = strings.Replace(q.sql, paramName, "?", 1)
+		} else {
+			q.err = fmt.Errorf("Missing paramters")
+			return
 		}
 	}
 	return q
