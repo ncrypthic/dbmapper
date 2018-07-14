@@ -41,12 +41,52 @@ type ResultMapper interface {
 	Map(RowMapper) error
 }
 
+// Int32 returns a row mapper for single int32 column
+func String(columnName string, dst *[]string) RowMapper {
+	data := ""
+	return func() *MappedColumns {
+		return Columns(
+			Column(columnName).As(&data),
+		).Then(func() error {
+			*dst = append(*dst, data)
+			return nil
+		})
+	}
+}
+
+// Int32 returns a row mapper for single int32 column
+func Int32(columnName string, dst *[]int32) RowMapper {
+	data := int32(0)
+	return func() *MappedColumns {
+		return Columns(
+			Column(columnName).As(&data),
+		).Then(func() error {
+			*dst = append(*dst, data)
+			return nil
+		})
+	}
+}
+
+// Int64 returns a row mapper for single int32 column
+func Int64(columnName string, dst *[]int64) RowMapper {
+	data := int64(0)
+	return func() *MappedColumns {
+		return Columns(
+			Column(columnName).As(&data),
+		).Then(func() error {
+			*dst = append(*dst, data)
+			return nil
+		})
+	}
+}
+
 type query struct {
-	namedSql   string
-	sql        string
-	params     map[string]interface{}
-	paramNames []string
-	err        error
+	namedSql    string
+	sql         string
+	params      map[string]interface{}
+	paramValues []interface{}
+	paramNames  []string
+	err         error
 }
 
 func (q *query) Error() error {
@@ -54,15 +94,7 @@ func (q *query) Error() error {
 }
 
 func (q *query) Params() []interface{} {
-	params := make([]interface{}, 0)
-	if q.err != nil {
-		log.Printf("Failed to get query string, %v", q.err)
-		return params
-	}
-	for _, val := range q.params {
-		params = append(params, val)
-	}
-	return params
+	return q.paramValues
 }
 
 func (q *query) SQL() string {
@@ -81,35 +113,54 @@ func (q *query) ParamNames() []string {
 	return q.paramNames
 }
 
+func (q *query) getParameter(name string, params []Parameter) ([]interface{}, error) {
+	for _, p := range params {
+		if name == p.Name() {
+			return p.Value()
+		}
+	}
+	return nil, nil
+}
+
 func (q *query) With(parameters ...Parameter) QueryMapper {
 	q.sql = q.namedSql
 	if q.params == nil {
 		q.params = make(map[string]interface{})
 	}
-	for _, p := range parameters {
-		paramName := ":" + p.Name()
-		if strings.Index(q.namedSql, paramName) == -1 {
-			continue
-		}
-		q.paramNames = append(q.paramNames, paramName)
-		val, err := p.Value()
-		if err != nil {
-			q.err = err
-			return q
-		}
-		if len(val) > 1 {
-			sliceElmts := []string{}
-			for idx, elmt := range val {
-				q.params[paramName+"_"+string(idx)] = elmt
-				sliceElmts = append(sliceElmts, "?")
+	pattern, err := regexp.Compile(":([a-zA-Z0-9_]+)")
+	if err != nil {
+		q.err = err
+		return q
+	}
+	res := pattern.FindAllStringSubmatch(q.namedSql, -1)
+	for _, match := range res {
+		if len(match) == 2 {
+			paramName := match[1]
+			value, err := q.getParameter(paramName, parameters)
+			if err != nil {
+				q.err = err
+				return q
 			}
-			q.sql = strings.Replace(q.sql, paramName, strings.Join(sliceElmts, ", "), 1)
-		} else if len(val) == 1 {
-			q.params[paramName] = val[0]
-			q.sql = strings.Replace(q.sql, paramName, "?", 1)
+			if len(value) > 1 {
+				q.paramNames = append(q.paramNames, paramName)
+				sliceElmts := []string{}
+				for idx, elmt := range value {
+					q.params[paramName+"_"+string(idx)] = elmt
+					q.paramValues = append(q.paramValues, elmt)
+					sliceElmts = append(sliceElmts, "?")
+				}
+				q.sql = strings.Replace(q.sql, ":"+paramName, strings.Join(sliceElmts, ", "), 1)
+			} else if len(value) == 1 {
+				q.paramNames = append(q.paramNames, paramName)
+				q.params[paramName] = value[0]
+				q.paramValues = append(q.paramValues, value[0])
+				q.sql = strings.Replace(q.sql, ":"+paramName, "?", 1)
+			} else {
+				q.err = errors.New("Missing paramters")
+				return q
+			}
 		} else {
-			q.err = errors.New("Missing paramters")
-			return q
+			continue
 		}
 	}
 	return q
