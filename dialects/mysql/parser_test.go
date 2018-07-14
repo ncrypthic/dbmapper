@@ -60,6 +60,30 @@ func TestRowParser(t *testing.T) {
 			fmt.Printf("%+v\n", r)
 		}
 	}
+	idRows := sqlMock.NewRows([]string{"id"}).AddRow(1).AddRow(2).AddRow(3)
+	mock.ExpectQuery("SELECT id FROM users").WillReturnRows(idRows)
+	res := make([]int32, 0)
+	err = Parse(db.Query("SELECT id FROM users")).Map(Int32("id", &res))
+	if err != nil {
+		fmt.Printf("%v", ParseErr(err))
+	} else {
+		fmt.Println("result:")
+		for _, r := range res {
+			fmt.Printf("%+v\n", r)
+		}
+	}
+	nameRows := sqlMock.NewRows([]string{"name"}).AddRow("alice").AddRow("bow").AddRow("charlie")
+	mock.ExpectQuery("SELECT name FROM users").WillReturnRows(nameRows)
+	names := make([]string, 0)
+	err = Parse(db.Query("SELECT name FROM users")).Map(String("name", &names))
+	if err != nil {
+		fmt.Printf("%v", ParseErr(err))
+	} else {
+		fmt.Println("result:")
+		for _, r := range names {
+			fmt.Printf("%+v\n", r)
+		}
+	}
 }
 
 func TestRowsParser(t *testing.T) {
@@ -121,5 +145,12 @@ func TestQueryMapper(t *testing.T) {
 	}
 	if q.SQL() != expectedSql {
 		t.Errorf("Fail: expect [ %v ] sql string, got [ %v ] instead", expectedSql, q.SQL())
+	}
+	for i := 0; i < 10; i++ {
+		for idx, queryParam := range q.Params() {
+			if expectedParams[idx] != queryParam {
+				t.Errorf("Fail: expect [ %v ] sql string, got [ %v ] instead", expectedParams, q.Params())
+			}
+		}
 	}
 }
