@@ -52,6 +52,9 @@ func (i *mockCqlIter) Scan(result ...interface{}) bool {
 		return true
 	}
 }
+func (i *mockCqlIter) NumRows() int {
+	return 3
+}
 
 func (i *mockCqlIter) Close() error {
 	return nil
@@ -124,7 +127,7 @@ func TestRowParser(t *testing.T) {
 	defer resetIter()
 	query := "SELECT id, name, active, opt_string FROM users"
 	users := make([]User, 0)
-	err := Parse(Query(query)).Map(func() *MappedColumns {
+	err := ParseCqlQuery(Query(query)).Map(func() *MappedColumns {
 		return userSqlMapper(&users)
 	})
 	if err != nil {
@@ -141,7 +144,7 @@ func TestRowsParser(t *testing.T) {
 	defer resetIter()
 	query := "SELECT id, name, active, opt_string FROM users"
 	users := make([]User, 0)
-	err := Parse(Query(query)).Map(usersSqlMapper(&users))
+	err := ParseCqlQuery(Query(query)).Map(usersSqlMapper(&users))
 	if err != nil {
 		fmt.Printf("%v", ParseErr(err))
 	} else {

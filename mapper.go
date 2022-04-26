@@ -7,9 +7,6 @@ import (
 	"strings"
 )
 
-// NoResultErr no result from query
-type NoResultErr error
-
 // MapScanErr  no result from query
 type MapScanErr error
 

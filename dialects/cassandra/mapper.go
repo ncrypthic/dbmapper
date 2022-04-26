@@ -1,14 +1,13 @@
 package cassandra
 
 import (
-	"errors"
 	"fmt"
 
 	. "github.com/ncrypthic/dbmapper"
 )
 
 type mapper struct {
-	query interface{}
+	query CqlQuery
 }
 
 func (m *mapper) targets(mapTarget map[string]*interface{}, names []string) []interface{} {
@@ -25,18 +24,10 @@ func (m *mapper) targets(mapTarget map[string]*interface{}, names []string) []in
 
 func (m *mapper) Map(rowMapper RowMapper) (mapErr error) {
 	rowMap := rowMapper()
-	if m.query == nil {
-		return NoResultErr(errors.New("Query is not valid"))
-	}
 	var dbColumns []string
-	var rs CqlIterator
-	switch t := m.query.(type) {
-	case CqlQuery:
-		rs = t.Iter()
-	case GocqlQuery:
-		rs = t.Iter()
-	default:
-		return fmt.Errorf("Failed to iterate query result")
+	rs := m.query.Iter()
+	if rs.NumRows() == 0 {
+		return ErrNoRows
 	}
 	for {
 		dbColumns = make([]string, 0)

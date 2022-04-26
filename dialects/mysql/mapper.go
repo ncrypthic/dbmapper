@@ -2,8 +2,6 @@ package mysql
 
 import (
 	"database/sql"
-	"errors"
-	"fmt"
 
 	. "github.com/ncrypthic/dbmapper"
 )
@@ -34,41 +32,37 @@ func (m *mapper) targets(mapTarget map[string]*interface{}, names []string) []in
 
 func (m *mapper) Map(rowMapper RowMapper) (mapErr error) {
 	if m.err != nil {
-		fmt.Printf("%+v\n", m.err)
 		return m.err
 	}
 	var dbColumns []string
 	rowMap := rowMapper()
-	if m.rows == nil {
-		return NoResultErr(errors.New("No rows from query"))
-	}
 	for m.rows.Next() {
 		targets := rowMap.Columns
 		targetMap := make(map[string]*interface{})
+	TargetLoop:
 		for _, column := range targets {
 			if columnErr := column.Error(); columnErr != nil {
 				mapErr = columnErr
-				fmt.Printf("%+v\n", mapErr)
+				break TargetLoop
 			}
 			targetMap[column.Name()] = column.Target()
 		}
 		if mapErr != nil {
-			fmt.Printf("%+v\n", mapErr)
 			return mapErr
 		}
 		if dbColumns == nil {
 			dbColumns, mapErr = m.rows.Columns()
 		}
 		if mapErr != nil {
-			fmt.Printf("%+v\n", mapErr)
 			return
 		}
 		dest := m.targets(targetMap, dbColumns)
-		if mapErr = m.rows.Scan(dest...); mapErr != nil {
-			fmt.Printf("%+v\n", mapErr)
+		mapErr = m.rows.Scan(dest...)
+		if mapErr != nil {
 			return
 		}
-		if mapErr = rowMap.Done(); mapErr != nil {
+		mapErr = rowMap.Done()
+		if mapErr != nil {
 			return
 		}
 	}
