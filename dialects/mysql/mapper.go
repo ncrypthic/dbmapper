@@ -36,7 +36,12 @@ func (m *mapper) Map(rowMapper RowMapper) (mapErr error) {
 	}
 	var dbColumns []string
 	rowMap := rowMapper()
+	defer m.rows.Close()
+	isEmpty := true
 	for m.rows.Next() {
+		if isEmpty {
+			isEmpty = false
+		}
 		targets := rowMap.Columns
 		targetMap := make(map[string]*interface{})
 	TargetLoop:
@@ -65,6 +70,9 @@ func (m *mapper) Map(rowMapper RowMapper) (mapErr error) {
 		if mapErr != nil {
 			return
 		}
+	}
+	if isEmpty {
+		return sql.ErrNoRows
 	}
 	return
 }
